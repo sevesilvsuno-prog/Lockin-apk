@@ -1,0 +1,40 @@
+name: Construire LOCKIN.apk
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+permissions:
+  contents: write
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Décompresser le projet
+        run: unzip -oq projet.zip -d projet
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.7'
+      - name: Compiler
+        working-directory: projet
+        run: gradle --no-daemon assembleDebug
+      - name: Récupérer l'APK
+        run: cp projet/app/build/outputs/apk/debug/app-debug.apk LOCKIN.apk
+      - name: Garder une copie en artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LOCKIN-apk
+          path: LOCKIN.apk
+      - name: Publier dans Releases
+        uses: ncipollo/release-action@v1
+        with:
+          tag: apk
+          name: LOCK IN — APK
+          artifacts: LOCKIN.apk
+          allowUpdates: true
+          replacesArtifacts: true
+          body: APK prêt à installer sur Android (autoriser les sources inconnues).
